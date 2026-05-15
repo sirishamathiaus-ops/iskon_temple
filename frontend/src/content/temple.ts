@@ -1,4 +1,4 @@
-/** ISKCON Dornala — Sri Jagannath Temple (static site copy). UPI: set `VITE_UPI_ID` in `.env` (e.g. name@ybl). */
+/** ISKCON Dornala — Sri Jagannath Temple. Set `VITE_UPI_ID`, `VITE_UPI_QR_URL` in `frontend/.env` for UPI display. */
 
 export const temple = {
   shortName: 'ISKCON Dornala',
@@ -38,4 +38,9 @@ export function getUpiId(): string {
 
 export function getUpiPayeeName(): string {
   return (import.meta.env.VITE_UPI_PAYEE_NAME as string | undefined)?.trim() || temple.shortName
+}
+
+/** Public URL of the temple UPI QR image (PNG/JPG), shown on the donate flow. */
+export function getUpiQrUrl(): string {
+  return (import.meta.env.VITE_UPI_QR_URL as string | undefined)?.trim() || ''
 }

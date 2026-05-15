@@ -1,14 +1,23 @@
 services:
   db:
     image: postgres:16-alpine
+    container_name: iskcon-temple-db
     environment:
       POSTGRES_USER: iskcon
       POSTGRES_PASSWORD: iskcon
       POSTGRES_DB: iskcon_temple
     ports:
-      - "5432:5432"
+      # 5433 avoids conflict with a local PostgreSQL on 5432
+      - "5433:5432"
     volumes:
       - iskcon_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iskcon -d iskcon_temple"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
 
 volumes:
   iskcon_pgdata:

@@ -3,15 +3,35 @@ import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from sqlalchemy.orm import Session
+
 from app.database import get_db
 from app.models.contact import ContactSubmission
 from app.models.content import HomepageContent
 from app.models.darshan import DarshanTiming
 from app.models.festival import Festival
 from app.models.gallery import GalleryItem
-from app.schemas import ContactCreate, FestivalOut, GalleryItemOut, DarshanTimingOut
+from app.schemas import ContactCreate, FestivalOut, GalleryItemOut, DarshanTimingOut, TempleSettingsOut
 
 router = APIRouter(prefix="/public", tags=["public"])
+
+TEMPLE_SETTINGS_KEY = "temple_settings"
+
+
+def _temple_settings_dict(db: Session) -> dict:
+    row = db.get(HomepageContent, TEMPLE_SETTINGS_KEY)
+    if not row:
+        return {}
+    try:
+        return dict(json.loads(row.value_json))
+    except (json.JSONDecodeError, TypeError):
+        return {}
+
+
+@router.get("/temple-settings", response_model=TempleSettingsOut)
+def public_temple_settings(db: Session = Depends(get_db)):
+    data = _temple_settings_dict(db)
+    return TempleSettingsOut(upi_qr_url=data.get("upi_qr_url"))
 
 
 @router.get("/festivals", response_model=list[FestivalOut])

@@ -28,11 +28,11 @@ export function DarshanPage() {
       <Seo title="Daily Darshan" description="Pooja timings, aarti schedule, and special darshan at our temple." />
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-6">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <p className="text-sm font-semibold uppercase tracking-wider text-gold-400">Darshan</p>
-          <h1 className="mt-3 font-display text-4xl text-white md:text-5xl">Daily worship & arati</h1>
-          <p className="mt-4 max-w-2xl text-lotus-200">
-            Timings are maintained by the temple office and can be updated from the admin dashboard. Please arrive a few
-            minutes early for arati.
+          <p className="text-sm font-semibold uppercase tracking-wider text-maroon-700/80">Darshan</p>
+          <h1 className="mt-3 font-display text-4xl text-maroon-900 md:text-5xl">Daily worship & arati</h1>
+          <p className="mt-4 max-w-2xl text-maroon-800/85">
+            Timings are maintained by the temple office and can be updated from the admin dashboard. Please arrive a few minutes
+            early for arati.
           </p>
         </motion.div>
 
@@ -42,15 +42,15 @@ export function DarshanPage() {
             if (!list?.length) return null
             return (
               <section key={key}>
-                <h2 className="font-display text-2xl text-gold-300">{labels[key] || key}</h2>
-                <div className="mt-6 divide-y divide-white/20 rounded-2xl border border-white/20 bg-white/[0.05] backdrop-blur-sm">
+                <h2 className="font-display text-2xl text-maroon-900">{labels[key] || key}</h2>
+                <div className="mt-6 divide-y divide-maroon-900/10 rounded-2xl border border-maroon-900/10 bg-white shadow-card">
                   {list.map((r) => (
                     <div key={r.id} className="flex flex-col gap-1 px-6 py-4 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className="font-medium text-white">{r.title}</p>
-                        {r.day_note && <p className="text-sm text-gold-300">{r.day_note}</p>}
+                        <p className="font-medium text-maroon-900">{r.title}</p>
+                        {r.day_note && <p className="text-sm text-saffron-600">{r.day_note}</p>}
                       </div>
-                      <p className="font-display text-xl text-gold-400 font-semibold">{r.time_label}</p>
+                      <p className="font-semibold text-maroon-800">{r.time_label}</p>
                     </div>
                   ))}
                 </div>

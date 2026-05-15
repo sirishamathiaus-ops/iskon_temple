@@ -36,6 +36,7 @@ class Donation(Base):
     festival_id: Mapped[Optional[int]] = mapped_column(ForeignKey("festivals.id"), nullable=True)
     razorpay_order_id: Mapped[Optional[str]] = mapped_column(String(120), unique=True, index=True)
     razorpay_payment_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    proof_image_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default=DonationStatus.PENDING.value, index=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

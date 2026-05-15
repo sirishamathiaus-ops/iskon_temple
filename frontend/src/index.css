@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply font-sans text-maroon-900 antialiased;
+  }
+  ::selection {
+    @apply bg-gold-200/90 text-maroon-900;
+  }
+}
+
+@layer components {
+  .card-elevated {
+    @apply rounded-2xl border border-maroon-900/10 bg-white shadow-card transition-shadow hover:shadow-gold;
+  }
+
+  .card-premium {
+    @apply rounded-3xl border border-maroon-900/10 bg-white shadow-[0_8px_32px_-8px_rgba(69,26,41,0.12)];
+  }
+
+  .btn-tap {
+    @apply transition-all duration-200 active:scale-[0.98] hover:brightness-[1.02];
+  }
+
+  .btn-primary-gold {
+    @apply btn-tap w-full rounded-full bg-gradient-to-r from-gold-500 via-amber-400 to-gold-500 py-4 text-base font-bold text-maroon-900 shadow-gold disabled:opacity-50;
+  }
+
+  .input-premium {
+    @apply mt-2 w-full rounded-2xl border border-maroon-900/10 bg-cream-50 px-4 py-3.5 text-maroon-900 shadow-inner transition focus:border-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-200/80;
+  }
+}
+
+@media (max-width: 640px) {
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}

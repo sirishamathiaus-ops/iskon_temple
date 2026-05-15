@@ -19,12 +19,56 @@ api.interceptors.response.use(
   },
 )
 
-export function assetUrl(path: string): string {
-  if (path.startsWith('http')) return path
-  // Vite `public/` files (e.g. /gallery/*) are served from the frontend origin, not the API host.
-  if (path.startsWith('/gallery/') || path.startsWith('/favicon')) return path
-  if (path.startsWith('/')) return `${base || ''}${path}`
-  return path
+/** Normalize stored paths (handles missing leading slash). */
+function normalizeMediaPath(path: string): string {
+  let p = path.trim()
+  if (!p) return ''
+  if (p.startsWith('http://') || p.startsWith('https://')) return p
+  if (!p.startsWith('/')) p = `/${p}`
+  return p
+}
+
+/**
+ * Resolve media URLs: absolute URLs, Vite `public/` (`/gallery/...`), and API static files (`/static/...`).
+ */
+export function assetUrl(path: string | null | undefined): string {
+  if (path == null) return ''
+  const p = normalizeMediaPath(String(path))
+  if (!p) return ''
+  if (p.startsWith('http://') || p.startsWith('https://')) return p
+  // Served by the frontend dev server or static hosting (not the API host).
+  if (
+    p.startsWith('/gallery/') ||
+    p.startsWith('/favicon') ||
+    p.startsWith('/upi-qr') ||
+    p.startsWith('/temple-logo')
+  ) {
+    return p
+  }
+  const galleryFile = p.match(/^\/?gallery\/(\d{1,2})\.png$/i)
+  if (galleryFile) {
+    return `/gallery/${galleryFile[1].padStart(2, '0')}.png`
+  }
+  if (p.startsWith('/static/')) {
+    if (base) return `${base}${p}`
+    return p
+  }
+  // Paths under / are frontend routes or public assets — do not prefix API host.
+  if (p.startsWith('/')) return p
+  return p
+}
+
+/** Multipart donation submit — lets the browser set the boundary (do not force JSON Content-Type). */
+export async function submitOfflineDonation(formData: FormData) {
+  return api.post('/donations/offline-submit', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    transformRequest: [(data, headers) => {
+      if (headers && typeof headers === 'object') {
+        delete (headers as Record<string, string>)['Content-Type']
+      }
+      return data
+    }],
+  })
 }
 
 export function setAuthToken(token: string | null) {
@@ -33,21 +77,4 @@ export function setAuthToken(token: string | null) {
   } else {
     delete api.defaults.headers.common.Authorization
   }
-}
-
-declare global {
-  interface Window {
-    Razorpay?: new (options: Record<string, unknown>) => { open: () => void }
-  }
-}
-
-export function loadRazorpayScript(): Promise<void> {
-  if (window.Razorpay) return Promise.resolve()
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script')
-    s.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    s.onload = () => resolve()
-    s.onerror = () => reject(new Error('Failed to load Razorpay'))
-    document.body.appendChild(s)
-  })
 }

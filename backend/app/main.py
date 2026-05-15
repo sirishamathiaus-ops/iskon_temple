@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
-from app.database import Base, engine
+from app.database import Base, engine, ensure_db_schema
 from app.routers import admin, auth, donations, public
 
 settings = get_settings()
@@ -18,6 +18,7 @@ UPLOAD_DIR = STATIC_DIR / "uploads"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    ensure_db_schema()
     STATIC_DIR.mkdir(parents=True, exist_ok=True)
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     yield

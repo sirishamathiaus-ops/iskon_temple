@@ -120,6 +120,12 @@ class HomepageContentOut(BaseModel):
         from_attributes = True
 
 
+class TempleSettingsOut(BaseModel):
+    """Public / admin: UPI QR image path (served under /static/uploads/...)."""
+
+    upi_qr_url: Optional[str] = None
+
+
 class ContactCreate(BaseModel):
     name: str = Field(..., max_length=120)
     email: EmailStr
@@ -176,6 +182,7 @@ class DonationOut(BaseModel):
     festival_id: Optional[int]
     razorpay_order_id: Optional[str]
     razorpay_payment_id: Optional[str]
+    proof_image_url: Optional[str] = None
     status: str
     notes: Optional[str]
     created_at: datetime

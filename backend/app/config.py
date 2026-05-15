@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
 
-    database_url: str = "postgresql+psycopg://iskcon:iskcon@localhost:5432/iskcon_temple"
+    database_url: str = "postgresql+psycopg://iskcon:iskcon@localhost:5433/iskcon_temple"
 
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 

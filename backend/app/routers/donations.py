@@ -1,9 +1,11 @@
 import hashlib
 import hmac
+import uuid
+from pathlib import Path
 from typing import Any
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -15,6 +17,8 @@ from app.schemas import DonationCreateOrder, DonationOrderResponse, DonationVeri
 router = APIRouter(prefix="/donations", tags=["donations"])
 
 ALLOWED = {c.value for c in DonationCategory}
+
+UPLOAD_DIR = Path(__file__).resolve().parent.parent / "static" / "uploads"
 
 
 def _require_razorpay_keys() -> tuple[str, str]:
@@ -137,3 +141,67 @@ def verify_payment(body: DonationVerify, db: Session = Depends(get_db)):
     donation.status = DonationStatus.PAID.value
     db.commit()
     return {"ok": True, "message": "Thank you for your generous offering.", "donation_id": donation.id}
+
+
+@router.post("/offline-submit")
+async def offline_submit(
+    category: str = Form(...),
+    amount_rupees: float = Form(...),
+    donor_name: str = Form(...),
+    donor_email: str | None = Form(None),
+    donor_phone: str | None = Form(None),
+    festival_id: int | None = Form(None),
+    notes: str | None = Form(None),
+    proof: UploadFile | None = File(None),
+    db: Session = Depends(get_db),
+):
+    """Bank / UPI donation intent; optional payment screenshot for office verification."""
+    if category not in ALLOWED:
+        raise HTTPException(status_code=400, detail="Invalid donation category")
+    if category == DonationCategory.FESTIVAL_SPONSORSHIP.value:
+        if not festival_id:
+            raise HTTPException(status_code=400, detail="festival_id is required for festival sponsorship")
+        fest = db.get(Festival, festival_id)
+        if not fest or not fest.sponsorship_enabled:
+            raise HTTPException(status_code=400, detail="Invalid or disabled festival for sponsorship")
+
+    amount_paise = int(round(amount_rupees * 100))
+    if amount_paise < 100:
+        raise HTTPException(status_code=400, detail="Minimum amount is ₹1")
+
+    proof_url: str | None = None
+    if proof and proof.filename:
+        if not proof.content_type or not proof.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Please upload an image (JPG or PNG) of your payment confirmation")
+
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        ext = Path(proof.filename or "proof").suffix.lower()
+        if ext not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
+            ext = ".jpg"
+        name = f"donation_{uuid.uuid4().hex}{ext}"
+        dest = UPLOAD_DIR / name
+        content = await proof.read()
+        if len(content) > 8 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Screenshot too large (max 8MB)")
+        dest.write_bytes(content)
+        proof_url = f"/static/uploads/{name}"
+
+    donation = Donation(
+        category=category,
+        amount_paise=amount_paise,
+        donor_name=donor_name,
+        donor_email=str(donor_email).strip() if donor_email and str(donor_email).strip() else "donor@temple.local",
+        donor_phone=donor_phone,
+        festival_id=festival_id,
+        notes=notes,
+        status=DonationStatus.PENDING.value,
+        proof_image_url=proof_url,
+    )
+    db.add(donation)
+    db.commit()
+    db.refresh(donation)
+    return {
+        "ok": True,
+        "message": "Thank you. We received your seva details; our office will verify and acknowledge.",
+        "donation_id": donation.id,
+    }

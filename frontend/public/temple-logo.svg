@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="ISKCON">
+  <defs>
+    <linearGradient id="g" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f5d78e"/>
+      <stop offset="0.5" stop-color="#c9952c"/>
+      <stop offset="1" stop-color="#7d2d44"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#g)" opacity="0.15"/>
+  <circle cx="32" cy="32" r="28" stroke="url(#g)" stroke-width="2" fill="#fffdf8"/>
+  <path fill="#7d2d44" d="M32 14c-6 8-14 12-14 20a14 14 0 1 0 28 0c0-8-8-12-14-20zm0 8c3.5 4.5 8 7.5 10 11.5a10 10 0 1 1-20 0c2-4 6.5-7 10-11.5z"/>
+  <circle cx="32" cy="36" r="4" fill="#c9952c"/>
+  <path stroke="#ea7c2a" stroke-width="1.5" stroke-linecap="round" d="M20 48h24M26 52h12"/>
+</svg>

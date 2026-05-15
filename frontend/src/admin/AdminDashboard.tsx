@@ -4,7 +4,7 @@ import { api, assetUrl } from '@/lib/api'
 import { useAdminAuth } from './auth'
 import type { DarshanRow, Festival, GalleryItem } from '@/types'
 
-type Tab = 'donations' | 'festivals' | 'gallery' | 'darshan' | 'homepage' | 'contacts'
+type Tab = 'donations' | 'festivals' | 'gallery' | 'darshan' | 'homepage' | 'temple' | 'contacts'
 
 type DonationRow = {
   id: number
@@ -17,6 +17,7 @@ type DonationRow = {
   festival_id: number | null
   razorpay_order_id: string | null
   razorpay_payment_id: string | null
+  proof_image_url: string | null
   status: string
   notes: string | null
   created_at: string
@@ -34,7 +35,7 @@ type ContactRow = {
 
 type HomepageRow = { key: string; value_json: string; updated_at: string }
 
-const homepageKeys = ['hero', 'featured_donations', 'temple_intro', 'darshan_highlight'] as const
+const homepageKeys = ['hero', 'featured_donations', 'temple_intro', 'darshan_highlight','name_highlight'] as const
 
 export function AdminDashboard() {
   const { logout } = useAdminAuth()
@@ -84,6 +85,7 @@ export function AdminDashboard() {
         { id: 'gallery' as const, label: 'Gallery' },
         { id: 'darshan' as const, label: 'Darshan' },
         { id: 'homepage' as const, label: 'Homepage' },
+        { id: 'temple' as const, label: 'Temple' },
         { id: 'contacts' as const, label: 'Contacts' },
       ] as const,
     [],
@@ -135,6 +137,7 @@ export function AdminDashboard() {
           {tab === 'homepage' && (
             <HomepagePanel hpKey={hpKey} setHpKey={setHpKey} hpJson={hpJson} setHpJson={setHpJson} onRefresh={loadHomepage} onNotify={setMsg} />
           )}
+          {tab === 'temple' && <TemplePanel onNotify={setMsg} />}
           {tab === 'contacts' && <ContactsPanel rows={contacts} onRefresh={loadContacts} />}
         </div>
       </div>
@@ -163,6 +166,7 @@ function DonationsPanel({
             <th className="px-4 py-3">Category</th>
             <th className="px-4 py-3">Amount</th>
             <th className="px-4 py-3">Donor</th>
+            <th className="px-4 py-3">Proof</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">When</th>
           </tr>
@@ -176,6 +180,20 @@ function DonationsPanel({
               <td className="px-4 py-3">
                 <div className="font-medium text-white">{d.donor_name}</div>
                 <div className="text-xs text-lotus-200/70">{d.donor_email}</div>
+              </td>
+              <td className="px-4 py-3 text-xs">
+                {d.proof_image_url ? (
+                  <a
+                    href={assetUrl(d.proof_image_url)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-gold-200 underline hover:text-gold-100"
+                  >
+                    View screenshot
+                  </a>
+                ) : (
+                  <span className="text-lotus-200/50">—</span>
+                )}
               </td>
               <td className="px-4 py-3">
                 <select
@@ -597,6 +615,87 @@ function ContactsPanel({ rows, onRefresh }: { rows: ContactRow[]; onRefresh: () 
           <p className="mt-2 text-xs text-lotus-200/50">{new Date(c.created_at).toLocaleString()}</p>
         </div>
       ))}
+    </div>
+  )
+}
+
+type TempleSettings = { upi_qr_url: string | null }
+
+function TemplePanel({ onNotify }: { onNotify: (s: string | null) => void }) {
+  const [settings, setSettings] = useState<TempleSettings>({ upi_qr_url: null })
+
+  const load = useCallback(() => api.get<TempleSettings>('/admin/temple/settings').then((r) => setSettings(r.data)), [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  async function upload(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    const file = fd.get('file') as File | null
+    if (!file?.size) {
+      onNotify('Choose an image file first')
+      return
+    }
+    const up = new FormData()
+    up.append('file', file)
+    try {
+      await api.post('/admin/temple/upi-qr', up, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      onNotify('UPI QR image updated')
+      load()
+      e.currentTarget.reset()
+    } catch {
+      onNotify('Upload failed — check file type (PNG/JPG) and size (max 4MB)')
+    }
+  }
+
+  async function removeQr() {
+    if (!confirm('Remove the UPI QR image from the public Donate page?')) return
+    try {
+      await api.delete('/admin/temple/upi-qr')
+      onNotify('UPI QR removed')
+      load()
+    } catch {
+      onNotify('Could not remove — try again')
+    }
+  }
+
+  return (
+    <div className="space-y-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+      <h2 className="font-display text-xl text-white">Temple — UPI QR code</h2>
+      <p className="text-sm text-lotus-200/80">
+        This image is shown on the public Donate page (payment step). Use a clear square QR export from your bank or UPI app.
+      </p>
+      {settings.upi_qr_url ? (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <img
+            src={assetUrl(settings.upi_qr_url)}
+            alt="Current UPI QR"
+            className="h-48 w-48 rounded-xl border border-white/10 bg-white object-contain p-2"
+          />
+          <button
+            type="button"
+            onClick={removeQr}
+            className="self-start rounded-full border border-red-400/50 px-4 py-2 text-sm text-red-200 hover:bg-red-500/10"
+          >
+            Remove QR image
+          </button>
+        </div>
+      ) : (
+        <p className="text-sm text-lotus-200/70">No QR uploaded yet.</p>
+      )}
+      <form onSubmit={upload} className="space-y-3 border-t border-white/10 pt-6">
+        <label className="block text-sm text-lotus-200/90">
+          New image
+          <input name="file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" required className="mt-2 block w-full text-sm" />
+        </label>
+        <button type="submit" className="rounded-full bg-gold-500 px-5 py-2 text-sm font-semibold text-lotus-900">
+          Upload or replace UPI QR
+        </button>
+      </form>
     </div>
   )
 }

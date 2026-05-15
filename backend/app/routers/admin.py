@@ -27,16 +27,96 @@ from app.schemas import (
     GalleryItemOut,
     HomepageContentOut,
     HomepageContentUpdate,
+    TempleSettingsOut,
 )
 from app.security import get_current_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "static" / "uploads"
+TEMPLE_SETTINGS_KEY = "temple_settings"
+UPI_QR_STEM = "temple_upi_qr"
 
 
 def _ensure_upload_dir() -> None:
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _temple_settings_read(db: Session) -> dict:
+    row = db.get(HomepageContent, TEMPLE_SETTINGS_KEY)
+    if not row:
+        return {}
+    try:
+        return dict(json.loads(row.value_json))
+    except (json.JSONDecodeError, TypeError):
+        return {}
+
+
+def _temple_settings_save(db: Session, data: dict) -> None:
+    val = json.dumps(data)
+    row = db.get(HomepageContent, TEMPLE_SETTINGS_KEY)
+    if row:
+        row.value_json = val
+    else:
+        db.add(HomepageContent(key=TEMPLE_SETTINGS_KEY, value_json=val))
+
+
+def _delete_upi_qr_files() -> None:
+    if not UPLOAD_DIR.is_dir():
+        return
+    for p in UPLOAD_DIR.glob(f"{UPI_QR_STEM}.*"):
+        try:
+            p.unlink()
+        except OSError:
+            pass
+
+
+@router.get("/temple/settings", response_model=TempleSettingsOut)
+def admin_get_temple_settings(
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(get_current_admin),
+):
+    data = _temple_settings_read(db)
+    return TempleSettingsOut(upi_qr_url=data.get("upi_qr_url"))
+
+
+@router.post("/temple/upi-qr", response_model=TempleSettingsOut)
+async def admin_upload_upi_qr(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(get_current_admin),
+):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Please upload an image file (PNG, JPG, or WebP).")
+    ext = Path(file.filename or "qr.png").suffix.lower()
+    if ext not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
+        ext = ".png"
+    _ensure_upload_dir()
+    _delete_upi_qr_files()
+    dest = UPLOAD_DIR / f"{UPI_QR_STEM}{ext}"
+    content = await file.read()
+    if len(content) > 4 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Image too large (max 4MB)")
+    dest.write_bytes(content)
+    url = f"/static/uploads/{dest.name}"
+    data = _temple_settings_read(db)
+    data["upi_qr_url"] = url
+    _temple_settings_save(db, data)
+    db.commit()
+    return TempleSettingsOut(upi_qr_url=url)
+
+
+@router.delete("/temple/upi-qr", response_model=TempleSettingsOut)
+def admin_delete_upi_qr(
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(get_current_admin),
+):
+    _delete_upi_qr_files()
+    data = _temple_settings_read(db)
+    data["upi_qr_url"] = None
+    _temple_settings_save(db, data)
+    db.commit()
+    return TempleSettingsOut(upi_qr_url=None)
 
 
 @router.get("/donations", response_model=list[DonationOut])

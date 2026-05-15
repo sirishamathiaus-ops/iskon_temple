@@ -8,6 +8,7 @@ import { FestivalsPage } from '@/pages/Festivals'
 import { FestivalDetailPage } from '@/pages/FestivalDetail'
 import { DonatePage } from '@/pages/Donate'
 import { ContactPage } from '@/pages/Contact'
+import { GalleryPage } from '@/pages/Gallery'
 import { AdminLoginPage } from '@/admin/AdminLogin'
 import { AdminDashboard } from '@/admin/AdminDashboard'
 import { RequireAdmin, getStoredToken } from '@/admin/auth'
@@ -37,6 +38,7 @@ export default function App() {
         <Route index element={<HomePage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="darshan" element={<DarshanPage />} />
+        <Route path="gallery" element={<GalleryPage />} />
         <Route path="festivals" element={<FestivalsPage />} />
         <Route path="festivals/:slug" element={<FestivalDetailPage />} />
         <Route path="donate" element={<DonatePage />} />

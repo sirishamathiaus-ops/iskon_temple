@@ -8,8 +8,17 @@ React (Vite) + Tailwind frontend, FastAPI + PostgreSQL backend, Razorpay for don
 
 ### 1. Database
 
+First-time setup or if you see **role "iskcon" does not exist** (stale volume or wrong port):
+
 ```bash
-docker compose up -d
+./scripts/setup-db.sh
+```
+
+Or manually:
+
+```bash
+./scripts/reset-db.sh   # docker compose down -v && up (creates user iskcon)
+cd backend && cp .env.example .env   # DATABASE_URL uses port 5433
 ```
 
 ### 2. Backend
