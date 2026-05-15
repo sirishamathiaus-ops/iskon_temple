@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: iskcon
+      POSTGRES_PASSWORD: iskcon
+      POSTGRES_DB: iskcon_temple
+    ports:
+      - "5432:5432"
+    volumes:
+      - iskcon_pgdata:/var/lib/postgresql/data
+
+volumes:
+  iskcon_pgdata:
