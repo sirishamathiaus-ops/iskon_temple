@@ -7,6 +7,8 @@ import { DarshanPage } from '@/pages/Darshan'
 import { FestivalsPage } from '@/pages/Festivals'
 import { FestivalDetailPage } from '@/pages/FestivalDetail'
 import { DonatePage } from '@/pages/Donate'
+import { PaymentPage } from '@/pages/Payment'
+import { PaymentHistoryPage } from '@/pages/PaymentHistory'
 import { ContactPage } from '@/pages/Contact'
 import { GalleryPage } from '@/pages/Gallery'
 import { AdminLoginPage } from '@/admin/AdminLogin'
@@ -42,6 +44,8 @@ export default function App() {
         <Route path="festivals" element={<FestivalsPage />} />
         <Route path="festivals/:slug" element={<FestivalDetailPage />} />
         <Route path="donate" element={<DonatePage />} />
+        <Route path="pay" element={<PaymentPage />} />
+        <Route path="payments/history" element={<PaymentHistoryPage />} />
         <Route path="contact" element={<ContactPage />} />
       </Route>
 

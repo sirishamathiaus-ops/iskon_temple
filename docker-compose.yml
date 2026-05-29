@@ -19,5 +19,38 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: iskcon-temple-api
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://iskcon:iskcon@db:5432/iskcon_temple
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_uploads:/app/app/static/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000
+    container_name: iskcon-temple-web
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
 volumes:
   iskcon_pgdata:
+  backend_uploads:

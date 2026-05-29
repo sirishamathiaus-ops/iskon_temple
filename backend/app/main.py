@@ -1,14 +1,22 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
+from app.core.exceptions import (
+    http_exception_handler,
+    unhandled_exception_handler,
+    validation_exception_handler,
+)
+from app.core.logging_config import setup_logging
 from app.database import Base, engine, ensure_db_schema
-from app.routers import admin, auth, donations, public
+from app.routers import admin, auth, donations, payments, public
 
+setup_logging()
 settings = get_settings()
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -26,6 +34,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -37,6 +49,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api")
 app.include_router(public.router, prefix="/api")
 app.include_router(donations.router, prefix="/api")
+app.include_router(payments.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

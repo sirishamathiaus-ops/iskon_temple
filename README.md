@@ -1,6 +1,8 @@
 # ISKCON Temple — full stack
 
-React (Vite) + Tailwind frontend, FastAPI + PostgreSQL backend, Razorpay for donations, JWT admin auth.
+React (Vite) + Tailwind frontend, FastAPI + PostgreSQL backend, **Razorpay Checkout** (orders, verify, webhooks, refunds), JWT admin auth.
+
+**Razorpay guide:** see [docs/RAZORPAY_SETUP.md](docs/RAZORPAY_SETUP.md) for keys, test cards, webhooks, and Docker.
 
 **ISKCON Dornala:** Site copy, address, bank, and WhatsApp are in `frontend/src/content/temple.ts`. Set `VITE_UPI_ID` in `frontend/.env` for the public UPI line. Gallery JPEGs/PNGs live in `frontend/public/gallery/` (`01.png`–`45.png`); run `scripts/seed.py` to load them into the DB (use `SEED_REFRESH_GALLERY=1` to replace an old gallery).
 
@@ -51,13 +53,15 @@ npm run dev
 
 Open `http://localhost:5173`. The Vite dev server proxies `/api` and `/static` to the backend.
 
+**Razorpay pages:** `/pay` (standalone checkout), `/donate` (Card/UPI online option), `/payments/history`.
+
 **Admin (not linked in the public nav):** `http://localhost:5173/admin/login` — use credentials from `scripts/seed.py` defaults unless you overrode env vars.
 
 ### Production notes
 
 - Set `VITE_API_URL` when the frontend is served separately (e.g. `https://api.yourtemple.org`).
 - Use a strong `SECRET_KEY` and HTTPS everywhere.
-- Configure Razorpay webhooks for payment reconciliation (extend `POST /api/donations/webhook` as needed).
+- Configure Razorpay webhooks → `POST /api/payments/webhook` (see [docs/RAZORPAY_SETUP.md](docs/RAZORPAY_SETUP.md)).
 - Replace placeholder contact address and Google Maps embed in the Contact page.
 - For true **monthly** auto-debit, enable Razorpay Subscriptions or UPI Autopay in the dashboard and extend the backend to create subscription links instead of one-off Orders where appropriate.
 
@@ -69,9 +73,23 @@ Open `http://localhost:5173`. The Vite dev server proxies `/api` and `/static` t
 | Admin login | `POST /api/auth/login` (OAuth2 password form) |
 | Public content | `GET /api/public/*` |
 | Donations | `POST /api/donations/create-order`, `POST /api/donations/verify` |
+| Payments | `POST /api/payments/create-order`, `POST /api/payments/verify`, `GET /api/payments/history`, `POST /api/payments/webhook`, `POST /api/payments/{id}/refund` (admin) |
 | Admin | `GET/PATCH/POST/DELETE /api/admin/*` (Bearer token) |
+
+### Docker (API + web + Postgres)
+
+```bash
+cp backend/.env.example backend/.env   # add Razorpay keys
+docker compose up --build
+```
+
+- Frontend: http://localhost:3000  
+- API: http://localhost:8000  
 
 ## Project layout
 
-- `backend/app` — FastAPI app, SQLAlchemy models, routers
-- `frontend/src` — Pages, admin dashboard, API client
+- `backend/app` — FastAPI app, SQLAlchemy models, routers, `services/razorpay_service.py`
+- `backend/app/models/payment.py` — Razorpay `payments` table
+- `frontend/src/pages/Payment.tsx` — Razorpay checkout page
+- `frontend/src/lib/razorpay.ts` — Checkout SDK loader
+- `docs/RAZORPAY_SETUP.md` — Full Razorpay setup & testing

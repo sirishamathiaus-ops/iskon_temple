@@ -2,6 +2,8 @@ import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { api, assetUrl } from '@/lib/api'
+import { apiErrorMessage, openRazorpayCheckout } from '@/lib/razorpay'
+import type { DonationOrderResponse, RazorpaySuccessPayload } from '@/types/payment'
 import { Seo } from '@/components/Seo'
 import { Modal } from '@/components/Modal'
 import { getUpiId, getUpiPayeeName, temple } from '@/content/temple'
@@ -9,7 +11,7 @@ import { UPI_QR_STATIC } from '@/content/siteMedia'
 import type { DonationCategory, Festival } from '@/types'
 
 type TempleSettings = { upi_qr_url: string | null }
-type PaymentMethod = 'upi' | 'bank'
+type PaymentMethod = 'razorpay' | 'upi' | 'bank'
 
 const SUCCESS_MSG =
   'Thank you for your donation. May Lord Krishna bless you and your family with peace, prosperity, and divine blessings.'
@@ -38,7 +40,9 @@ export function DonatePage() {
   const location = useLocation() as { state?: { category?: DonationCategory; festivalId?: number } }
   const [festivals, setFestivals] = useState<Festival[]>([])
   const [templeSettings, setTempleSettings] = useState<TempleSettings>({ upi_qr_url: null })
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('upi')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('razorpay')
+  const [payLoading, setPayLoading] = useState(false)
+  const [payError, setPayError] = useState<string | null>(null)
   const [category, setCategory] = useState<DonationCategory>('annadanam')
   const [festivalId, setFestivalId] = useState<number | ''>('')
   const [amount, setAmount] = useState('501')
@@ -101,9 +105,62 @@ export function DonatePage() {
     setShowBankModal(true)
   }
 
+  async function payWithRazorpay() {
+    if (!validateForm()) return
+    if (!donorEmail.trim() || !donorEmail.includes('@')) {
+      setError('Email is required for online card/UPI payment (Razorpay).')
+      return
+    }
+    setPayError(null)
+    setPayLoading(true)
+    try {
+      const { data: order } = await api.post<DonationOrderResponse>('/donations/create-order', {
+        category,
+        amount_rupees: Number(amount),
+        donor_name: donorName.trim(),
+        donor_email: donorEmail.trim(),
+        donor_phone: donorPhone.trim() || undefined,
+        festival_id: category === 'festival_sponsorship' && festivalId ? Number(festivalId) : undefined,
+        notes: notes.trim() || undefined,
+      })
+
+      await openRazorpayCheckout({
+        key: order.key_id,
+        order_id: order.order_id,
+        amount: order.amount_paise,
+        currency: order.currency,
+        name: 'ISKCON Dornala — Seva',
+        description: selected?.label ?? 'Temple donation',
+        prefill: { name: donorName.trim(), email: donorEmail.trim(), contact: donorPhone.trim() || undefined },
+        onSuccess: async (payload: RazorpaySuccessPayload) => {
+          try {
+            await api.post('/donations/verify', {
+              razorpay_order_id: payload.razorpay_order_id,
+              razorpay_payment_id: payload.razorpay_payment_id,
+              razorpay_signature: payload.razorpay_signature,
+            })
+            setShowSuccess(true)
+          } catch (err) {
+            setPayError(
+              apiErrorMessage(err, 'Verification failed. Contact us if the amount was debited.'),
+            )
+          }
+        },
+        onDismiss: () => {
+          setPayError('Payment was cancelled before completion.')
+        },
+      })
+    } catch (err) {
+      setPayError(apiErrorMessage(err, 'Could not start Razorpay checkout. Configure keys in backend .env'))
+    } finally {
+      setPayLoading(false)
+    }
+  }
+
   function handlePrimaryAction() {
     if (!validateForm()) return
-    if (paymentMethod === 'upi') openUpiFlow()
+    if (paymentMethod === 'razorpay') void payWithRazorpay()
+    else if (paymentMethod === 'upi') openUpiFlow()
     else openBankFlow()
   }
 
@@ -131,9 +188,9 @@ export function DonatePage() {
       </section>
 
       <div className="mx-auto max-w-6xl px-4 pb-16 md:px-6 md:pb-20">
-        {error && !showUpiModal && !showBankModal && (
+        {(error || payError) && !showUpiModal && !showBankModal && (
           <p className="mt-6 rounded-2xl border border-red-300/50 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
-            {error}
+            {error || payError}
           </p>
         )}
 
@@ -188,7 +245,12 @@ export function DonatePage() {
                 <input required autoComplete="name" className="input-premium" value={donorName} onChange={(e) => setDonorName(e.target.value)} />
               </label>
               <label className="mt-4 block text-sm font-medium text-maroon-800">
-                Email <span className="font-normal text-maroon-600/70">(optional)</span>
+                Email{' '}
+                {paymentMethod === 'razorpay' ? (
+                  <span className="text-red-600">*</span>
+                ) : (
+                  <span className="font-normal text-maroon-600/70">(optional)</span>
+                )}
                 <input type="email" autoComplete="email" className="input-premium" value={donorEmail} onChange={(e) => setDonorEmail(e.target.value)} />
               </label>
               <label className="mt-4 block text-sm font-medium text-maroon-800">
@@ -210,12 +272,18 @@ export function DonatePage() {
               <h2 className="font-display text-xl text-maroon-900">Payment method</h2>
               <p className="mt-1 text-sm text-maroon-700/75">Select how you would like to offer your seva.</p>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Payment method">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Payment method">
+                <PaymentMethodCard
+                  active={paymentMethod === 'razorpay'}
+                  title="Card / UPI online"
+                  subtitle="Razorpay secure checkout"
+                  badge="Recommended"
+                  onSelect={() => setPaymentMethod('razorpay')}
+                />
                 <PaymentMethodCard
                   active={paymentMethod === 'upi'}
-                  title="UPI"
-                  subtitle="Fast & secure — scan QR"
-                  badge="Recommended"
+                  title="UPI QR"
+                  subtitle="Scan temple QR code"
                   onSelect={() => setPaymentMethod('upi')}
                 />
                 <PaymentMethodCard
@@ -227,12 +295,21 @@ export function DonatePage() {
               </div>
 
               <div className="mt-5 rounded-2xl border border-gold-400/25 bg-gradient-to-br from-gold-50/70 to-cream-50 p-4 text-sm text-maroon-800/90">
-                {paymentMethod === 'upi' ? (
+                {paymentMethod === 'razorpay' && (
+                  <>
+                    <p className="font-medium text-maroon-900">Razorpay checkout</p>
+                    <p className="mt-1">
+                      Pay {amountLabel} with card, UPI, or netbanking. Email required for receipt.
+                    </p>
+                  </>
+                )}
+                {paymentMethod === 'upi' && (
                   <>
                     <p className="font-medium text-maroon-900">UPI payment</p>
                     <p className="mt-1">Opens a secure popup with the official temple QR code.</p>
                   </>
-                ) : (
+                )}
+                {paymentMethod === 'bank' && (
                   <>
                     <p className="font-medium text-maroon-900">Bank transfer</p>
                     <p className="mt-1">Opens a secure popup with official temple account details.</p>
@@ -242,12 +319,24 @@ export function DonatePage() {
 
               <button
                 type="button"
-                disabled={!donorName.trim()}
+                disabled={!donorName.trim() || payLoading}
                 onClick={handlePrimaryAction}
                 className="btn-primary-gold mt-6"
               >
-                {paymentMethod === 'upi' ? 'Donate via UPI' : 'View bank details'}
+                {payLoading && 'Opening Razorpay…'}
+                {!payLoading && paymentMethod === 'razorpay' && `Pay ${amountLabel} with Razorpay`}
+                {!payLoading && paymentMethod === 'upi' && 'Donate via UPI'}
+                {!payLoading && paymentMethod === 'bank' && 'View bank details'}
               </button>
+              <p className="mt-3 text-center text-xs text-maroon-700/70">
+                <a href="/pay" className="underline-offset-2 hover:underline">
+                  Standalone payment page
+                </a>
+                {' · '}
+                <a href="/payments/history" className="underline-offset-2 hover:underline">
+                  Payment history
+                </a>
+              </p>
             </div>
           </motion.div>
         </div>
