@@ -6,6 +6,21 @@
   html {
     scroll-behavior: smooth;
   }
+
+  .page-enter {
+    animation: page-fade-in 0.35s ease-out;
+  }
+
+  @keyframes page-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
   body {
     @apply font-sans text-maroon-900 antialiased;
   }
@@ -33,6 +48,83 @@
 
   .input-premium {
     @apply mt-2 w-full rounded-2xl border border-maroon-900/10 bg-cream-50 px-4 py-3.5 text-maroon-900 shadow-inner transition focus:border-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-200/80;
+  }
+
+  .home-section-panel {
+    @apply rounded-3xl border border-white/70 bg-white/90 shadow-[0_12px_40px_-16px_rgba(69,26,41,0.15)] backdrop-blur-md;
+  }
+
+  .hero-text-shadow {
+    text-shadow:
+      0 2px 16px rgba(0, 0, 0, 0.85),
+      0 1px 4px rgba(0, 0, 0, 0.75),
+      0 0 1px rgba(0, 0, 0, 0.9);
+  }
+}
+
+/* Spiritual UI — depth, glow, smooth motion */
+.depth-stage {
+  perspective: 1400px;
+  perspective-origin: center center;
+}
+
+.depth-text-layer {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.spiritual-glow-orb {
+  animation: spiritual-glow-pulse 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.spiritual-glow-orb-delay {
+  animation-delay: 2.5s;
+}
+
+@keyframes vertical-marquee {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-vertical-marquee {
+  animation: vertical-marquee 28s linear infinite;
+}
+
+@keyframes spiritual-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08);
+  }
+}
+
+.spiritual-card-hover {
+  @apply transition-all duration-300 ease-out;
+}
+
+.spiritual-card-hover:hover {
+  @apply shadow-gold;
+  transform: translateY(-2px) scale(1.02);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .spiritual-glow-orb {
+    animation: none;
+  }
+  .spiritual-card-hover:hover {
+    transform: none;
   }
 }
 
