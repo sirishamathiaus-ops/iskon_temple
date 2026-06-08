@@ -33,7 +33,10 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env: SECRET_KEY, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# or: uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+Open http://127.0.0.1:8000/ — you should see `{"message":"ISKCON Temple Backend Running Successfully"}`. API docs: http://127.0.0.1:8000/docs
 
 In another terminal, seed demo content and the first admin user (override with `ADMIN_USERNAME` / `ADMIN_PASSWORD`):
 
@@ -69,7 +72,13 @@ Open `http://localhost:5173`. The Vite dev server proxies `/api` and `/static` t
 
 | Area | Path |
 |------|------|
+| Root | `GET /` — backend status message |
+| API index | `GET /api` — endpoint map |
 | Health | `GET /api/health` |
+| Festivals | `GET /api/festivals`, `GET /api/festivals/{slug}` (includes Ugadi sample data) |
+| About | `GET /api/about`, `GET /api/about/{section_id}` |
+| Deities | `GET /api/deities` — worship timetable |
+| History | `GET /api/history`, `GET /api/history/srisailam`, `GET /api/history/radha-krishna` |
 | Admin login | `POST /api/auth/login` (OAuth2 password form) |
 | Public content | `GET /api/public/*` |
 | Donations | `POST /api/donations/create-order`, `POST /api/donations/verify` |

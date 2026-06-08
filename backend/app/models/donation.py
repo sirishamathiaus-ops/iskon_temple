@@ -10,6 +10,7 @@ from app.database import Base
 
 class DonationCategory(str, Enum):
     ANNADANAM = "annadanam"
+    TRIPLE_CHILDREN = "triple_children"
     CARE_COW = "care_cow"
     TEMPLE_CONSTRUCTION = "temple_construction"
     FESTIVAL_SPONSORSHIP = "festival_sponsorship"

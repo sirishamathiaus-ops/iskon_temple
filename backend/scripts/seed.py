@@ -44,6 +44,17 @@ def seed_festivals(db: Session) -> None:
             sort_order=0,
         ),
         Festival(
+            name="Balarama Jayanti",
+            slug="balarama-jayanti-2026",
+            event_date=date(2026, 8, 28),
+            short_description="Appearance of Lord Balarama — abhishekam, kirtan, and maha prasadam.",
+            description="Celebrate the divine appearance of Lord Balarama, the elder brother of Sri Krishna and the original spiritual master. Join us for special darshan, abhishekam, kirtan, and prasadam at Hare Krishna Land.",
+            image_url=_fest_gallery(0),
+            sponsorship_enabled=True,
+            is_featured=True,
+            sort_order=2,
+        ),
+        Festival(
             name="Gaura Purnima",
             slug="gaura-purnima-2026",
             event_date=today + timedelta(days=55),
@@ -110,6 +121,17 @@ def seed_festivals(db: Session) -> None:
             sort_order=6,
         ),
         Festival(
+            name="Ugadi",
+            slug="ugadi-2026",
+            event_date=date(2026, 3, 19),
+            short_description="Telugu New Year — Panchanga Sravanam, special darshan, neem-jaggery prasadam, and festive kirtan.",
+            description="Ugadi (Yugadi) marks the beginning of the Hindu lunar New Year. Join us for Panchanga Sravanam, Sri Jagannath darshan, kirtan, and traditional Ugadi prasadam at Hare Krishna Land.",
+            image_url=_fest_gallery(7),
+            sponsorship_enabled=True,
+            is_featured=True,
+            sort_order=7,
+        ),
+        Festival(
             name="Temple special programs",
             slug="temple-special-programs",
             event_date=None,
@@ -118,7 +140,7 @@ def seed_festivals(db: Session) -> None:
             image_url=_fest_gallery(7),
             sponsorship_enabled=False,
             is_featured=False,
-            sort_order=7,
+            sort_order=8,
         ),
     ]
     added = 0

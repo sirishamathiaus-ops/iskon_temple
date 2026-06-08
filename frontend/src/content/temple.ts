@@ -1,7 +1,7 @@
 /** ISKCON Dornala — Sri Jagannath Temple. Set `VITE_UPI_ID`, `VITE_UPI_QR_URL` in `frontend/.env` for UPI display. */
 
 export const temple = {
-  shortName: 'ISKCON Dornala',
+  shortName: 'ISKCON Srisailam',
   fullName: 'ISKCON Dornala — Sri Jagannath Temple',
   tagline: 'Hare Krishna Land • Srisailam Road',
   addressLines: [

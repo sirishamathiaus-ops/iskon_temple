@@ -56,9 +56,16 @@
 
   .hero-text-shadow {
     text-shadow:
-      0 2px 16px rgba(0, 0, 0, 0.85),
-      0 1px 4px rgba(0, 0, 0, 0.75),
-      0 0 1px rgba(0, 0, 0, 0.9);
+      0 0 24px rgba(255, 252, 247, 0.95),
+      0 1px 1px rgba(255, 255, 255, 0.85);
+  }
+
+  .hero-btn-primary {
+    @apply btn-tap inline-flex items-center justify-center rounded-xl bg-maroon-900 px-6 py-3 text-sm font-semibold text-cream-50 shadow-[0_4px_16px_rgba(69,26,41,0.28)] transition hover:bg-maroon-800;
+  }
+
+  .hero-btn-secondary {
+    @apply btn-tap inline-flex items-center justify-center rounded-xl border border-maroon-900/15 bg-white/95 px-6 py-3 text-sm font-semibold text-maroon-900 shadow-[0_2px_10px_rgba(69,26,41,0.1)] backdrop-blur-sm transition hover:border-maroon-900/25 hover:bg-white;
   }
 }
 
@@ -132,4 +139,19 @@
   .safe-bottom {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+}
+
+/* About gallery — mobile swipe carousel */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.about-gallery-carousel {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
 }

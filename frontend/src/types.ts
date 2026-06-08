@@ -36,6 +36,7 @@ export type GalleryItem = {
 
 export type DonationCategory =
   | 'annadanam'
+  | 'triple_children'
   | 'care_cow'
   | 'temple_construction'
   | 'festival_sponsorship'

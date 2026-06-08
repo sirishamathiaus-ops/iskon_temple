@@ -3,20 +3,17 @@ import { createPortal } from 'react-dom'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { temple } from '@/content/temple'
+import { NavDropdown, MobileNavAccordion } from '@/components/navigation/NavDropdown'
+import { ABOUT_DROPDOWN, FESTIVAL_DROPDOWN } from '@/lib/navConfig'
 
-const mainNav = [
-  { to: '/', label: 'Home', end: true },
-  { to: '/about', label: 'About Us' },
-  { to: '/darshan', label: 'Daily Darshan' },
-  { to: '/gallery', label: 'Gallery' },
-  { to: '/festivals', label: 'Festivals' },
-  { to: '/contact', label: 'Contact' },
-]
+const NAV_HOME = { to: '/', label: 'Home', end: true }
+const NAV_GALLERY = { to: '/gallery', label: 'Gallery' }
+const NAV_DARSHAN = { to: '/darshan', label: 'Daily Darshan' }
+const NAV_CONTACT = { to: '/contact', label: 'Contact' }
 
 function isNavActive(pathname: string, to: string, end?: boolean): boolean {
   if (end) return pathname === '/'
-  if (to === '/festivals') return pathname === '/festivals' || pathname.startsWith('/festivals/')
-  return pathname === to
+  return pathname === to || pathname.startsWith(`${to}/`)
 }
 
 function DonateCta({ className, onNavigate }: { className?: string; onNavigate?: () => void }) {
@@ -84,7 +81,6 @@ export function Navbar() {
                   className="absolute right-0 top-0 flex h-[100dvh] w-[min(100%,21rem)] flex-col overflow-hidden border-l border-gold-400/25 bg-cream-50 shadow-[0_0_60px_rgba(69,26,41,0.2)]"
                 >
                   <div className="relative border-b border-maroon-900/10 bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-900 px-5 pb-5 pt-6 text-cream-50">
-                    <motion.div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gold-400/20 blur-2xl" aria-hidden />
                     <div className="relative flex items-start justify-between gap-3">
                       <div>
                         <p className="font-display text-xl">Menu</p>
@@ -105,7 +101,7 @@ export function Navbar() {
 
                   <nav className="flex-1 overflow-y-auto overscroll-contain px-4 py-5" aria-label="Mobile">
                     <ul className="space-y-2">
-                      {mainNav.map((item, i) => {
+                      {([NAV_HOME] as const).map((item, i) => {
                         const active = isNavActive(location.pathname, item.to, item.end)
                         return (
                           <motion.li
@@ -129,13 +125,72 @@ export function Navbar() {
                           </motion.li>
                         )
                       })}
+
+                      <MobileNavAccordion
+                        label="About Us"
+                        items={ABOUT_DROPDOWN}
+                        onNavigate={navigateFromDrawer}
+                        defaultOpen={location.pathname.startsWith('/about')}
+                      />
+
+                      {([NAV_GALLERY, NAV_DARSHAN] as const).map((item, i) => {
+                        const active = isNavActive(location.pathname, item.to, item.end)
+                        return (
+                          <motion.li
+                            key={item.to}
+                            initial={{ opacity: 0, x: 16 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.12 + 0.04 * i, duration: 0.25 }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => navigateFromDrawer(item.to)}
+                              className={[
+                                'btn-tap block w-full rounded-2xl px-4 py-3.5 text-left text-[15px] font-medium shadow-sm',
+                                active
+                                  ? 'bg-gradient-to-r from-gold-500/90 to-amber-400/90 text-maroon-900 ring-1 ring-gold-300/50'
+                                  : 'border border-maroon-900/8 bg-white text-maroon-900 hover:border-gold-400/40',
+                              ].join(' ')}
+                            >
+                              {item.label}
+                            </button>
+                          </motion.li>
+                        )
+                      })}
+
+                      <MobileNavAccordion
+                        label="Festivals"
+                        items={FESTIVAL_DROPDOWN}
+                        onNavigate={navigateFromDrawer}
+                        defaultOpen={location.pathname.startsWith('/festivals')}
+                      />
+
+                      {([NAV_CONTACT] as const).map((item) => {
+                        const active = isNavActive(location.pathname, item.to, item.end)
+                        return (
+                          <motion.li
+                            key={item.to}
+                            initial={{ opacity: 0, x: 16 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.24, duration: 0.25 }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => navigateFromDrawer(item.to)}
+                              className={[
+                                'btn-tap block w-full rounded-2xl px-4 py-3.5 text-left text-[15px] font-medium shadow-sm',
+                                active
+                                  ? 'bg-gradient-to-r from-gold-500/90 to-amber-400/90 text-maroon-900 ring-1 ring-gold-300/50'
+                                  : 'border border-maroon-900/8 bg-white text-maroon-900 hover:border-gold-400/40',
+                              ].join(' ')}
+                            >
+                              {item.label}
+                            </button>
+                          </motion.li>
+                        )
+                      })}
                     </ul>
-                    <motion.div
-                      className="mt-6"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.28 }}
-                    >
+                    <motion.div className="mt-6" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
                       <button
                         type="button"
                         onClick={() => navigateFromDrawer('/donate')}
@@ -173,23 +228,66 @@ export function Navbar() {
           </Link>
 
           <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Main">
-            {mainNav.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  [
-                    'btn-tap rounded-full px-3.5 py-2 text-sm font-medium',
-                    isActive
-                      ? 'bg-maroon-900 text-cream-50 shadow-soft'
-                      : 'text-maroon-800/90 hover:bg-white hover:text-maroon-900 hover:shadow-card',
-                  ].join(' ')
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
+            <NavLink
+              to={NAV_HOME.to}
+              end={NAV_HOME.end}
+              className={({ isActive }) =>
+                [
+                  'btn-tap rounded-full px-3.5 py-2 text-sm font-medium',
+                  isActive
+                    ? 'bg-maroon-900 text-cream-50 shadow-soft'
+                    : 'text-maroon-800/90 hover:bg-white hover:text-maroon-900 hover:shadow-card',
+                ].join(' ')
+              }
+            >
+              {NAV_HOME.label}
+            </NavLink>
+
+            <NavDropdown label="About Us" items={ABOUT_DROPDOWN} isActive={(p) => p.startsWith('/about')} />
+
+            <NavLink
+              to={NAV_GALLERY.to}
+              className={({ isActive }) =>
+                [
+                  'btn-tap rounded-full px-3.5 py-2 text-sm font-medium',
+                  isActive
+                    ? 'bg-maroon-900 text-cream-50 shadow-soft'
+                    : 'text-maroon-800/90 hover:bg-white hover:text-maroon-900 hover:shadow-card',
+                ].join(' ')
+              }
+            >
+              {NAV_GALLERY.label}
+            </NavLink>
+
+            <NavLink
+              to={NAV_DARSHAN.to}
+              className={({ isActive }) =>
+                [
+                  'btn-tap rounded-full px-3.5 py-2 text-sm font-medium',
+                  isActive
+                    ? 'bg-maroon-900 text-cream-50 shadow-soft'
+                    : 'text-maroon-800/90 hover:bg-white hover:text-maroon-900 hover:shadow-card',
+                ].join(' ')
+              }
+            >
+              {NAV_DARSHAN.label}
+            </NavLink>
+
+            <NavDropdown label="Festivals" items={FESTIVAL_DROPDOWN} isActive={(p) => p.startsWith('/festivals')} />
+
+            <NavLink
+              to={NAV_CONTACT.to}
+              className={({ isActive }) =>
+                [
+                  'btn-tap rounded-full px-3.5 py-2 text-sm font-medium',
+                  isActive
+                    ? 'bg-maroon-900 text-cream-50 shadow-soft'
+                    : 'text-maroon-800/90 hover:bg-white hover:text-maroon-900 hover:shadow-card',
+                ].join(' ')
+              }
+            >
+              {NAV_CONTACT.label}
+            </NavLink>
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">

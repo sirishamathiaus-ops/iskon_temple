@@ -2,6 +2,8 @@
  * Images from `frontend/public/spiritual/` — user-uploaded festival & temple photos.
  */
 
+import { SRISAILAM_HISTORY } from '@/content/spiritualContent'
+
 export type SpiritualImageDef = {
   id: string
   src: string
@@ -9,6 +11,8 @@ export type SpiritualImageDef = {
   alt: string
   title?: string
   caption?: string
+  width?: number
+  height?: number
 }
 
 /** Encode filenames with spaces/special chars for URLs */
@@ -21,6 +25,38 @@ export function heroSlidePath(filename: string): string {
   return `/spiritual/hero/${encodeURIComponent(filename)}`
 }
 
+/** Full-bleed hero background for the home hero section */
+export const HOME_HERO_BACKGROUND = heroSlidePath('hero-background.jpg')
+
+/** Sacred Abode section — separate from hero slider (`/spiritual/sacred-abode/`) */
+export function sacredAbodePath(filename: string): string {
+  return `/spiritual/sacred-abode/${encodeURIComponent(filename)}`
+}
+
+function sacredAbodeAsset(
+  file: string,
+  alt: string,
+  title?: string,
+  dimensions?: { width: number; height: number },
+): SpiritualImageDef {
+  return {
+    id: `sacred-abode-${file.replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`,
+    src: sacredAbodePath(file),
+    alt,
+    title,
+    width: dimensions?.width,
+    height: dimensions?.height,
+  }
+}
+
+/** Featured image for Sacred Abode section — not used in hero slider */
+export const SACRED_ABODE_IMAGE = sacredAbodeAsset(
+  'sacred-abode.jpg',
+  'Sacred pastoral landscape at Hare Krishna Land',
+  'Hare Krishna Land',
+  { width: 1600, height: 890 },
+)
+
 function heroAsset(file: string, alt: string, title?: string): SpiritualImageDef {
   return {
     id: file.replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase(),
@@ -29,6 +65,49 @@ function heroAsset(file: string, alt: string, title?: string): SpiritualImageDef
     title,
   }
 }
+
+/** About ISKCON hero — temple at Hare Krishna Land */
+export const ABOUT_ISKCON_HERO_IMAGE = sacredAbodeAsset(
+  'temple-dornala.jpg',
+  'ISKCON temple at Hare Krishna Land',
+  'ISKCON Srisailam',
+  { width: 1600, height: 996 },
+)
+
+/** Deities timetable hero — Radha Krishna worship */
+export const ABOUT_DEITIES_HERO_IMAGE = heroAsset(
+  'radha-krishna-03.jpg',
+  'Radha Krishna arati and worship',
+  'Radha Krishna',
+)
+
+/** About Srisailam hero — Mallikarjuna Jyotirlinga */
+export const ABOUT_SRISAILAM_HERO_IMAGE = sacredAbodeAsset(
+  'mallikarjuna-swamy.jpg',
+  'Sri Mallikarjuna Swamy at Srisailam',
+  'Mallikarjuna Swamy',
+  { width: 1600, height: 890 },
+)
+
+/** Founder section images (`/spiritual/founder/`) */
+export function founderPath(filename: string): string {
+  return `/spiritual/founder/${encodeURIComponent(filename)}`
+}
+
+function founderAsset(file: string, alt: string, title?: string): SpiritualImageDef {
+  return {
+    id: `founder-${file.replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`,
+    src: founderPath(file),
+    alt,
+    title,
+  }
+}
+
+export const ABOUT_FOUNDER_HERO_IMAGE = founderAsset(
+  'srila-prabhupada.jpg',
+  'His Divine Grace A.C. Bhaktivedanta Swami Prabhupada',
+  'Srila Prabhupada',
+)
 
 function asset(file: string, alt: string, title?: string, fallback?: string): SpiritualImageDef {
   return {
@@ -85,6 +164,7 @@ export const SPIRITUAL_IMAGES = {
 export const FESTIVAL_SPIRITUAL_IMAGES: Record<string, { primary: string; extras?: string[] }> = {
   'ugadi-2026': { primary: 'Ugadi.jpeg', extras: ['kukumkama.jpg'] },
   'janmashtami-2026': { primary: 'srikrishna.webp', extras: ['Radhakrishna1.jpg', 'Radha krishna.jpg'] },
+  'balarama-jayanti-2026': { primary: 'balaramjayanthi.jpg', extras: ['Radhakrishna1.jpg'] },
   'gaura-purnima-2026': { primary: 'Gaura Purnima.webp', extras: ['Radhakrishna images4.jpg'] },
   'radhashtami-2026': { primary: 'Radhakrishnaimages3.jpg', extras: ['Radhakrishna3.webp'] },
   'rama-navami-2026': { primary: 'Sriramanavami.jpg', extras: ['Narsimha.jpg'] },
@@ -107,20 +187,70 @@ export function festivalSpiritualGallery(slug: string, name: string): SpiritualI
   return files.map((f) => asset(f, `${name} — festival`, name))
 }
 
-/** About section → story images */
-export const ABOUT_STORY_IMAGES: Record<string, SpiritualImageDef[]> = {
-  iskcon: [SPIRITUAL_IMAGES.templeBuilding, SPIRITUAL_IMAGES.templePrograms, SPIRITUAL_IMAGES.kukumkama],
-  founder: [SPIRITUAL_IMAGES.radhaKrishna, SPIRITUAL_IMAGES.radhaKrishna1, SPIRITUAL_IMAGES.sriKrishna],
-  nvcc: [SPIRITUAL_IMAGES.srisailam, SPIRITUAL_IMAGES.shivaGopuram2, SPIRITUAL_IMAGES.templeBuilding],
-  'deities-timetable': [SPIRITUAL_IMAGES.sriKrishna, SPIRITUAL_IMAGES.radhaKrishnaWebp, SPIRITUAL_IMAGES.kukumkama],
-  srisailam: [
+function aboutGalleryImage(
+  base: SpiritualImageDef,
+  title: string,
+  caption: string,
+): SpiritualImageDef {
+  return {
+    ...base,
+    id: `srisailam-about-${base.id}`,
+    title,
+    caption,
+    alt: `${title} — ${base.alt}`,
+  }
+}
+
+/** Srisailam About tab — each image paired with its history text (replaces section cards) */
+export const SRISAILAM_ABOUT_GALLERY: SpiritualImageDef[] = [
+  aboutGalleryImage(
     SPIRITUAL_IMAGES.mallikarjuna,
+    'Jyotirlinga significance',
+    SRISAILAM_HISTORY.sections[0].body,
+  ),
+  aboutGalleryImage(
     SPIRITUAL_IMAGES.shivaGopuram,
-    SPIRITUAL_IMAGES.shivaParvati,
-    SPIRITUAL_IMAGES.srisailamWater,
-    SPIRITUAL_IMAGES.bramarambika,
+    'Location & spiritual importance',
+    SRISAILAM_HISTORY.sections[1].body,
+  ),
+  aboutGalleryImage(
     SPIRITUAL_IMAGES.srisailamView,
+    'Historical background',
+    SRISAILAM_HISTORY.sections[2].body,
+  ),
+  aboutGalleryImage(
+    SPIRITUAL_IMAGES.shivaParvati,
+    'Shiva & Parvati',
+    SRISAILAM_HISTORY.sections[3].body,
+  ),
+  aboutGalleryImage(
+    SPIRITUAL_IMAGES.shivaGopuram2,
+    'In Hindu culture',
+    SRISAILAM_HISTORY.sections[4].body,
+  ),
+  aboutGalleryImage(
+    SPIRITUAL_IMAGES.shivaLingam,
+    'Sacred architecture',
+    SRISAILAM_HISTORY.architecture,
+  ),
+]
+
+/** About section → gallery images (tab-specific; no cross-tab mixing) */
+export const ABOUT_STORY_IMAGES: Record<string, SpiritualImageDef[]> = {
+  iskcon: [
+    SPIRITUAL_IMAGES.templeBuilding,
+    SPIRITUAL_IMAGES.templePrograms,
+    SPIRITUAL_IMAGES.gauraPurnima,
+    SPIRITUAL_IMAGES.kukumkama,
+    SPIRITUAL_IMAGES.radhaKrishna,
+    SPIRITUAL_IMAGES.radhaKrishna2,
   ],
+  'deities-timetable': [
+    SPIRITUAL_IMAGES.sriKrishna,
+    SPIRITUAL_IMAGES.radhaKrishnaWebp,
+    SPIRITUAL_IMAGES.kukumkama,
+  ],
+  srisailam: SRISAILAM_ABOUT_GALLERY,
 }
 
 export const HOME_HERO_BG = SPIRITUAL_IMAGES.templeBuilding
@@ -138,6 +268,68 @@ export const HOME_HERO_BG_SLIDES: SpiritualImageDef[] = [
   heroAsset('radha-krishna-06.jpg', 'Lord Sri Krishna', 'Sri Krishna'),
   heroAsset('radha-krishna-07.jpg', 'Radha Krishna — Radhashtami', 'Radha Krishna'),
   heroAsset('shiva-parvati-01.jpg', 'Lord Shiva and Goddess Parvati', 'Shiva Parvati'),
+]
+
+export type HomeHeroSlide = {
+  image: SpiritualImageDef
+  heading: string
+  message: string
+}
+
+const RK_MESSAGES = [
+  'Experience the divine love of Radha Krishna.',
+  'Devotion to Krishna brings peace and happiness.',
+  'Let your heart be filled with Krishna consciousness.',
+] as const
+
+const SP_MESSAGES = [
+  'May Shiva and Parvathi bless your spiritual journey.',
+  'Find strength in Shiva and compassion in Parvathi.',
+  'Om Namah Shivaya – embrace inner peace.',
+] as const
+
+/** Synced hero slides — image, spiritual heading, and devotional message */
+export const HOME_HERO_SLIDES: HomeHeroSlide[] = [
+  {
+    image: HOME_HERO_BG_SLIDES[0],
+    heading: 'Sri Radha Krishna',
+    message: RK_MESSAGES[0],
+  },
+  {
+    image: HOME_HERO_BG_SLIDES[1],
+    heading: 'Divine Love of Radha Krishna',
+    message: RK_MESSAGES[1],
+  },
+  {
+    image: HOME_HERO_BG_SLIDES[2],
+    heading: 'Krishna Consciousness',
+    message: RK_MESSAGES[2],
+  },
+  {
+    image: HOME_HERO_BG_SLIDES[3],
+    heading: 'Sri Radha Krishna',
+    message: RK_MESSAGES[0],
+  },
+  {
+    image: HOME_HERO_BG_SLIDES[4],
+    heading: 'Divine Love of Radha Krishna',
+    message: RK_MESSAGES[1],
+  },
+  {
+    image: HOME_HERO_BG_SLIDES[5],
+    heading: 'Krishna Consciousness',
+    message: RK_MESSAGES[2],
+  },
+  {
+    image: HOME_HERO_BG_SLIDES[6],
+    heading: 'Sri Radha Krishna',
+    message: RK_MESSAGES[0],
+  },
+  {
+    image: HOME_HERO_BG_SLIDES[7],
+    heading: 'Shiva & Parvati',
+    message: SP_MESSAGES[0],
+  },
 ]
 
 /** @deprecated Use HOME_HERO_BG_SLIDES */

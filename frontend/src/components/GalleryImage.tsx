@@ -27,8 +27,13 @@ export function GalleryImage({ slot, alt, className, loading = 'lazy' }: Gallery
       className={className}
       loading={loading}
       decoding="async"
-      onError={() => {
-        if (attempt < chain.length - 1) setAttempt((a) => a + 1)
+      onError={(e) => {
+        if (attempt < chain.length - 1) {
+          setAttempt((a) => a + 1)
+        } else {
+          e.currentTarget.src = '/temple-logo.svg'
+          e.currentTarget.classList.add('object-contain', 'p-4')
+        }
       }}
     />
   )

@@ -18,6 +18,11 @@ const SUCCESS_MSG =
 
 const categories: { id: DonationCategory; label: string; blurb: string }[] = [
   { id: 'annadanam', label: 'Annadanam Donation', blurb: 'Sponsor prasadam for pilgrims and festival feasts.' },
+  {
+    id: 'triple_children',
+    label: 'Triple Children Seva',
+    blurb: 'Sponsor meals, learning, and spiritual culture for three children in our temple programs.',
+  },
   { id: 'care_cow', label: 'Care for Cows', blurb: 'Support goshala care and compassionate cow protection.' },
   { id: 'temple_construction', label: 'Temple Construction Fund', blurb: 'Build Sri Jagannath Temple at Hare Krishna Land.' },
   { id: 'festival_sponsorship', label: 'Festival Sponsorship', blurb: 'Sponsor abhishekam, flowers, or feast for a festival.' },
